@@ -32,7 +32,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/apache-httpd-app
-            docker stop apache-container || true
-            docker rm apache-container || true
-            docker run -d -p 80:80 --name apache-container ${{ secrets.DOCKER_USERNAME }}/apache-httpd-app
+            sudo docker pull ***/apache-httpd-app
+            sudo docker stop apache-container || true
+            sudo docker rm apache-container || true
+            sudo docker run -d -p 80:80 --name apache-container ***/apache-httpd-app
