@@ -1,0 +1,38 @@
+name: Apache CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker Image (Using httpd:alpine)
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/apache-httpd-app .
+
+      - name: Push Docker Image to Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/apache-httpd-app
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH into EC2 and Deploy
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/apache-httpd-app
+            docker stop apache-container || true
+            docker rm apache-container || true
+            docker run -d -p 80:80 --name apache-container ${{ secrets.DOCKER_USERNAME }}/apache-httpd-app
